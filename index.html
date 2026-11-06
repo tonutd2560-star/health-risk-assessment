@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ระบบลงทะเบียนและประเมินความเสี่ยงสุขภาพเบื้องต้น</title>
+  <!-- MUI & Roboto -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #1976d2;
+      --primary-dark: #1565c0;
+      --secondary: #9c27b0;
+      --success: #2e7d32;
+      --warning: #ed6c02;
+      --error: #d32f2f;
+      --bg: #f5f5f5;
+      --paper: #ffffff;
+      --text-primary: rgba(0,0,0,.87);
+      --text-secondary: rgba(0,0,0,.60);
+      --divider: rgba(0,0,0,.12);
+      --shadow1: 0 2px 1px -1px rgba(0,0,0,.2),0 1px 1px 0 rgba(0,0,0,.14),0 1px 3px 0 rgba(0,0,0,.12);
+      --shadow3: 0 3px 3px -2px rgba(0,0,0,.2),0 3px 4px 0 rgba(0,0,0,.14),0 1px 8px 0 rgba(0,0,0,.12);
+      --shadow6: 0 3px 5px -1px rgba(0,0,0,.2),0 6px 10px 0 rgba(0,0,0,.14),0 1px 18px 0 rgba(0,0,0,.12);
+      --radius: 8px;
+    }
+
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* ===== App Bar ===== */
+    .app-bar {
+      background: var(--primary);
+      color: #fff;
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      box-shadow: var(--shadow6);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .app-bar h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: .5px; }
+    .app-bar span { font-size: .875rem; opacity: .85; margin-left: 12px; }
+
+    /* ===== Container ===== */
+    .container {
+      max-width: 900px;
+      margin: 32px auto;
+      padding: 0 16px;
+    }
+
+    /* ===== Paper ===== */
+    .paper {
+      background: var(--paper);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow3);
+      padding: 28px 32px;
+      margin-bottom: 24px;
+    }
+    .paper-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .paper-title svg { flex-shrink: 0; }
+
+    /* ===== Grid ===== */
+    .grid { display: grid; gap: 20px; }
+    .grid-2 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+    @media(max-width: 600px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+    /* ===== Stack ===== */
+    .stack { display: flex; flex-direction: column; gap: 16px; }
+
+    /* ===== TextField ===== */
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label {
+      font-size: .875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: color .2s;
+    }
+    .field input, .field select {
+      height: 44px;
+      padding: 0 14px;
+      border: 1px solid var(--divider);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 1rem;
+      color: var(--text-primary);
+      background: #fff;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+    .field input:focus, .field select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(25,118,210,.18);
+    }
+    .field input.error, .field select.error { border-color: var(--error); }
+    .field .helper { font-size: .75rem; color: var(--text-secondary); }
+    .field .helper.error-msg { color: var(--error); }
+
+    /* ===== RadioGroup ===== */
+    .radio-group { display: flex; flex-direction: column; gap: 4px; }
+    .radio-group label.group-label {
+      font-size: .875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px;
+    }
+    .radio-options { display: flex; flex-wrap: wrap; gap: 10px; }
+    .radio-option {
+      display: flex; align-items: center; gap: 6px;
+      cursor: pointer; padding: 6px 12px;
+      border: 1px solid var(--divider);
+      border-radius: 20px;
+      transition: all .2s;
+      font-size: .9rem;
+    }
+    .radio-option input[type=radio] { accent-color: var(--primary); width: 16px; height: 16px; }
+    .radio-option:has(input:checked) {
+      background: rgba(25,118,210,.08);
+      border-color: var(--primary);
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    /* ===== Select ===== */
+    .field select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23555' d='M6 8L0 0h12z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer; }
+
+    /* ===== Buttons ===== */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 8px; height: 42px; padding: 0 24px;
+      border: none; border-radius: 4px;
+      font-family: inherit; font-size: .9375rem; font-weight: 600;
+      cursor: pointer; transition: all .2s; letter-spacing: .4px;
+    }
+    .btn-primary { background: var(--primary); color: #fff; box-shadow: var(--shadow1); }
+    .btn-primary:hover { background: var(--primary-dark); box-shadow: var(--shadow3); }
+    .btn-outlined { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+    .btn-outlined:hover { background: rgba(25,118,210,.06); }
+    .btn-actions { display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap; }
+
+    /* ===== Alert ===== */
+    .alert {
+      display: none; align-items: flex-start; gap: 10px;
+      padding: 12px 16px; border-radius: 4px;
+      font-size: .9rem; margin-top: 8px;
+    }
+    .alert.show { display: flex; }
+    .alert-error { background: #fdecea; color: var(--error); border: 1px solid #f5c6c3; }
+    .alert-warning { background: #fff4e5; color: var(--warning); border: 1px solid #ffcd9a; }
+    .alert-success { background: #edf7ed; color: var(--success); border: 1px solid #a8d5a9; }
+
+    /* ===== Chip ===== */
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 14px; border-radius: 16px;
+      font-size: .85rem; font-weight: 600;
+    }
+    .chip-low { background: #edf7ed; color: var(--success); border: 1px solid #a8d5a9; }
+    .chip-moderate { background: #fff4e5; color: var(--warning); border: 1px solid #ffcd9a; }
+    .chip-high { background: #fdecea; color: var(--error); border: 1px solid #f5c6c3; }
+
+    /* ===== Dialog ===== */
+    .dialog-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.5); z-index: 200;
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    .dialog-overlay.show { display: flex; }
+    .dialog {
+      background: #fff; border-radius: 8px; width: 100%; max-width: 560px;
+      box-shadow: var(--shadow6); animation: dialogIn .2s ease;
+    }
+    @keyframes dialogIn { from { transform: scale(.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .dialog-title {
+      padding: 20px 24px 12px;
+      font-size: 1.25rem; font-weight: 700;
+    }
+    .dialog-content { padding: 0 24px 16px; }
+    .dialog-actions { padding: 8px 24px 16px; display: flex; justify-content: flex-end; gap: 10px; }
+
+    /* ===== Result Card ===== */
+    .result-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--divider); }
+    .result-row:last-child { border-bottom: none; }
+    .result-label { color: var(--text-secondary); font-size: .9rem; }
+    .result-value { font-weight: 600; font-size: .95rem; }
+    .bmi-display {
+      text-align: center; padding: 20px;
+      border-radius: 8px; margin: 16px 0;
+      background: linear-gradient(135deg,#1976d2,#42a5f5);
+      color: #fff;
+    }
+    .bmi-display .bmi-num { font-size: 3rem; font-weight: 700; line-height: 1; }
+    .bmi-display .bmi-label { font-size: .9rem; opacity: .9; margin-top: 4px; }
+
+    /* ===== Recommendation ===== */
+    .rec-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .rec-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 14px; border-radius: 6px; font-size: .9rem;
+    }
+    .rec-item.low { background: #edf7ed; color: #1b5e20; }
+    .rec-item.moderate { background: #fff4e5; color: #e65100; }
+    .rec-item.high { background: #fdecea; color: #b71c1c; }
+
+    /* ===== Progress Steps ===== */
+    .steps { display: flex; align-items: center; margin-bottom: 24px; }
+    .step { display: flex; align-items: center; gap: 8px; flex: 1; }
+    .step-num {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .85rem; flex-shrink: 0;
+      transition: all .3s;
+    }
+    .step-num.active { background: var(--primary); color: #fff; }
+    .step-num.done { background: var(--success); color: #fff; }
+    .step-num.pending { background: var(--divider); color: var(--text-secondary); }
+    .step-label { font-size: .8rem; color: var(--text-secondary); font-weight: 500; }
+    .step-label.active { color: var(--primary); font-weight: 600; }
+    .step-connector { flex: 1; height: 2px; background: var(--divider); margin: 0 8px; }
+    .step-connector.done { background: var(--success); }
+
+    /* ===== Page sections ===== */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ===== Misc ===== */
+    .section-subtitle { font-size: .9rem; color: var(--text-secondary); margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+
+<!-- App Bar -->
+<header class="app-bar">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff" style="margin-right:10px;flex-shrink:0">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" opacity=".3"/>
+    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+  </svg>
+  <h1>ระบบประเมินความเสี่ยงสุขภาพ</h1>
+  <span style="display:none" id="subtitle">Patient Health Risk Assessment</span>
+</header>
+
+<!-- Main Container -->
+<div class="container">
+
+  <!-- Steps indicator -->
+  <div class="steps" id="stepsBar">
+    <div class="step">
+      <div class="step-num active" id="s1">1</div>
+      <div class="step-label active" id="sl1">ข้อมูลส่วนตัว</div>
+    </div>
+    <div class="step-connector" id="sc1"></div>
+    <div class="step">
+      <div class="step-num pending" id="s2">2</div>
+      <div class="step-label" id="sl2">ข้อมูลสุขภาพ</div>
+    </div>
+    <div class="step-connector" id="sc2"></div>
+    <div class="step">
+      <div class="step-num pending" id="s3">3</div>
+      <div class="step-label" id="sl3">ผลประเมิน</div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE 1: Personal Info ===== -->
+  <div class="page active" id="page1">
+    <div class="paper">
+      <div class="paper-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#1976d2"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        ข้อมูลส่วนตัวผู้ป่วย
+      </div>
+      <p class="section-subtitle">กรุณากรอกข้อมูลส่วนตัวให้ครบถ้วนและถูกต้อง</p>
+
+      <div class="stack">
+        <div class="grid grid-2">
+          <div class="field">
+            <label for="firstName">ชื่อ *</label>
+            <input type="text" id="firstName" placeholder="ชื่อ" />
+            <span class="helper error-msg" id="firstNameErr"></span>
+          </div>
+          <div class="field">
+            <label for="lastName">นามสกุล *</label>
+            <input type="text" id="lastName" placeholder="นามสกุล" />
+            <span class="helper error-msg" id="lastNameErr"></span>
+          </div>
+        </div>
+
+        <div class="grid grid-3">
+          <div class="field">
+            <label for="age">อายุ (ปี) *</label>
+            <input type="number" id="age" placeholder="เช่น 35" min="1" max="120" />
+            <span class="helper error-msg" id="ageErr"></span>
+          </div>
+          <div class="field">
+            <label for="gender">เพศ *</label>
+            <select id="gender">
+              <option value="">-- เลือกเพศ --</option>
+              <option value="male">ชาย</option>
+              <option value="female">หญิง</option>
+              <option value="other">อื่น ๆ</option>
+            </select>
+            <span class="helper error-msg" id="genderErr"></span>
+          </div>
+          <div class="field">
+            <label for="idCard">เลขบัตรประชาชน</label>
+            <input type="text" id="idCard" placeholder="1234567890123" maxlength="13" />
+            <span class="helper">ตัวเลข 13 หลัก (ถ้ามี)</span>
+          </div>
+        </div>
+
+        <div id="alertPage1" class="alert alert-error">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          <span id="alertPage1Msg">กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน</span>
+        </div>
+      </div>
+
+      <div class="btn-actions" style="margin-top:24px">
+        <button class="btn btn-primary" onclick="goPage2()">ถัดไป →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE 2: Health Info ===== -->
+  <div class="page" id="page2">
+    <div class="paper">
+      <div class="paper-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#1976d2"><path d="M20 6h-2.18c.07-.44.18-.88.18-1.33C18 2.54 15.86.6 13.26.6c-1.4 0-2.73.6-3.72 1.6L8 3.74l-1.54-1.54C5.5 1.2 4.17.6 2.77.6 1.17.6 0 1.77 0 3.37c0 .45.11.89.18 1.33H0v3.6h1.11L3 20h18l1.89-11.7H24V6h-4zm-6.74-3.8c.56-.56 1.3-.9 2-.9 1.42 0 2.74 1.12 2.74 2.57 0 .45-.09.89-.23 1.33h-5.86l1.35-2.99zM2.77 2.2c.7 0 1.44.34 2 .9l1.35 2.99H.26c-.14-.44-.23-.88-.23-1.33 0-1.45 1.32-2.57 2.74-2.57zM5.19 18 3.63 7.6h16.74L18.81 18H5.19z"/></svg>
+        ข้อมูลสุขภาพและพฤติกรรมเสี่ยง
+      </div>
+      <p class="section-subtitle">ข้อมูลนี้ใช้คำนวณ BMI และประเมินระดับความเสี่ยง</p>
+
+      <div class="stack">
+        <!-- Weight & Height -->
+        <div class="grid grid-2">
+          <div class="field">
+            <label for="weight">น้ำหนัก (kg) *</label>
+            <input type="number" id="weight" placeholder="เช่น 65.5" min="1" max="300" step="0.1" />
+            <span class="helper error-msg" id="weightErr"></span>
+          </div>
+          <div class="field">
+            <label for="height">ส่วนสูง (cm) *</label>
+            <input type="number" id="height" placeholder="เช่น 165" min="50" max="250" step="0.1" />
+            <span class="helper error-msg" id="heightErr"></span>
+          </div>
+        </div>
+
+        <!-- Risk Behaviors -->
+        <div class="radio-group">
+          <label class="group-label">พฤติกรรมความเสี่ยง (เลือกทั้งหมดที่ตรงกับท่าน) *</label>
+          <div class="radio-options" id="riskBehaviors">
+            <label class="radio-option">
+              <input type="checkbox" value="smoking" /> 🚬 สูบบุหรี่
+            </label>
+            <label class="radio-option">
+              <input type="checkbox" value="alcohol" /> 🍺 ดื่มแอลกอฮอล์
+            </label>
+            <label class="radio-option">
+              <input type="checkbox" value="sedentary" /> 🛋️ ไม่ออกกำลังกาย
+            </label>
+            <label class="radio-option">
+              <input type="checkbox" value="stress" /> 😰 ความเครียดสูง
+            </label>
+            <label class="radio-option">
+              <input type="checkbox" value="none" id="noneCheck" /> ✅ ไม่มี
+            </label>
+          </div>
+          <span class="helper error-msg" id="behaviorErr"></span>
+        </div>
+
+        <!-- Chronic Disease -->
+        <div class="field">
+          <label for="disease">โรคประจำตัว</label>
+          <select id="disease">
+            <option value="none">ไม่มีโรคประจำตัว</option>
+            <option value="diabetes">เบาหวาน</option>
+            <option value="hypertension">ความดันโลหิตสูง</option>
+            <option value="heart">โรคหัวใจ</option>
+            <option value="asthma">หอบหืด</option>
+            <option value="kidney">โรคไต</option>
+            <option value="other">อื่น ๆ</option>
+          </select>
+        </div>
+
+        <div id="alertPage2" class="alert alert-error">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          <span id="alertPage2Msg"></span>
+        </div>
+      </div>
+
+      <div class="btn-actions" style="margin-top:24px">
+        <button class="btn btn-outlined" onclick="goPage1()">← ย้อนกลับ</button>
+        <button class="btn btn-primary" onclick="calculate()">ประเมินผล 🔍</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE 3: Result ===== -->
+  <div class="page" id="page3">
+    <div class="paper">
+      <div class="paper-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#1976d2"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        สรุปผลการประเมินความเสี่ยงสุขภาพ
+      </div>
+
+      <!-- BMI Display -->
+      <div class="bmi-display">
+        <div class="bmi-label">ค่าดัชนีมวลกาย (BMI)</div>
+        <div class="bmi-num" id="bmiValue">--</div>
+        <div class="bmi-label" id="bmiCategory">กำลังคำนวณ...</div>
+      </div>
+
+      <!-- Patient Summary -->
+      <div id="summaryRows"></div>
+
+      <!-- Risk Level Chip -->
+      <div style="display:flex;align-items:center;gap:12px;margin:16px 0;padding:12px 0;border-top:1px solid var(--divider)">
+        <span style="font-weight:600;color:var(--text-secondary)">ระดับความเสี่ยง:</span>
+        <span class="chip" id="riskChip">-</span>
+      </div>
+
+      <!-- Recommendations -->
+      <div class="paper-title" style="margin-top:16px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#1976d2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+        ข้อแนะนำในการปฏิบัติตน
+      </div>
+      <ul class="rec-list" id="recList"></ul>
+
+      <div class="btn-actions" style="margin-top:24px">
+        <button class="btn btn-outlined" onclick="goPage1(); resetForm()">🔄 ประเมินใหม่</button>
+        <button class="btn btn-primary" onclick="showDialog()">📋 ดูรายละเอียด</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- ===== Dialog: Full Detail ===== -->
+<div class="dialog-overlay" id="detailDialog">
+  <div class="dialog">
+    <div class="dialog-title" id="dialogTitleText">รายละเอียดผลการประเมิน</div>
+    <div class="dialog-content">
+      <div id="dialogContent"></div>
+    </div>
+    <div class="dialog-actions">
+      <button class="btn btn-outlined" onclick="closeDialog()">ปิด</button>
+      <button class="btn btn-primary" onclick="printResult()">🖨️ พิมพ์ใบสรุป</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ========== State ==========
+  let patient = {};
+
+  // ========== Navigation ==========
+  function showPage(n) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page' + n).classList.add('active');
+    // Steps
+    for (let i = 1; i <= 3; i++) {
+      const sn = document.getElementById('s' + i);
+      const sl = document.getElementById('sl' + i);
+      if (i < n) { sn.className = 'step-num done'; sn.innerHTML = '✓'; }
+      else if (i === n) { sn.className = 'step-num active'; sn.innerHTML = i; }
+      else { sn.className = 'step-num pending'; sn.innerHTML = i; }
+      sl.className = 'step-label' + (i === n ? ' active' : '');
+    }
+    for (let i = 1; i <= 2; i++) {
+      const c = document.getElementById('sc' + i);
+      c.className = 'step-connector' + (i < n ? ' done' : '');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ========== Validation helpers ==========
+  function setErr(id, msg) {
+    const el = document.getElementById(id + 'Err');
+    const inp = document.getElementById(id);
+    if (el) el.textContent = msg;
+    if (inp) inp.classList.toggle('error', !!msg);
+  }
+  function clearErrs(...ids) { ids.forEach(id => setErr(id, '')); }
+
+  function showAlert(id, msg) {
+    const el = document.getElementById(id);
+    const msgEl = document.getElementById(id + 'Msg');
+    el.classList.toggle('show', !!msg);
+    if (msgEl && msg) msgEl.textContent = msg;
+  }
+
+  // ========== Page 1 → 2 ==========
+  function goPage2() {
+    const fn = document.getElementById('firstName').value.trim();
+    const ln = document.getElementById('lastName').value.trim();
+    const age = document.getElementById('age').value.trim();
+    const gender = document.getElementById('gender').value;
+
+    clearErrs('firstName', 'lastName', 'age', 'gender');
+    showAlert('alertPage1', '');
+    let valid = true;
+
+    if (!fn) { setErr('firstName', 'กรุณากรอกชื่อ'); valid = false; }
+    if (!ln) { setErr('lastName', 'กรุณากรอกนามสกุล'); valid = false; }
+    if (!age || isNaN(age) || +age < 1 || +age > 120) { setErr('age', 'กรุณากรอกอายุ (1-120 ปี)'); valid = false; }
+    if (!gender) { setErr('gender', 'กรุณาเลือกเพศ'); valid = false; }
+
+    if (!valid) { showAlert('alertPage1', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน'); return; }
+
+    patient.firstName = fn;
+    patient.lastName = ln;
+    patient.age = +age;
+    patient.gender = gender;
+    patient.idCard = document.getElementById('idCard').value.trim();
+
+    showPage(2);
+  }
+
+  function goPage1() { showPage(1); }
+
+  // ========== "ไม่มี" checkbox logic ==========
+  document.getElementById('noneCheck').addEventListener('change', function () {
+    if (this.checked) {
+      document.querySelectorAll('#riskBehaviors input[type=checkbox]').forEach(cb => {
+        if (cb !== this) cb.checked = false;
+      });
+    }
+  });
+  document.querySelectorAll('#riskBehaviors input[type=checkbox]').forEach(cb => {
+    if (cb.id !== 'noneCheck') {
+      cb.addEventListener('change', function () {
+        if (this.checked) document.getElementById('noneCheck').checked = false;
+      });
+    }
+  });
+
+  // ========== Calculate ==========
+  function calculate() {
+    const w = parseFloat(document.getElementById('weight').value);
+    const h = parseFloat(document.getElementById('height').value);
+    const behaviors = [...document.querySelectorAll('#riskBehaviors input[type=checkbox]:checked')].map(cb => cb.value);
+
+    clearErrs('weight', 'height');
+    showAlert('alertPage2', '');
+    let valid = true;
+
+    if (!w || isNaN(w) || w < 1 || w > 300) { setErr('weight', 'กรุณากรอกน้ำหนักที่ถูกต้อง (1-300 kg)'); valid = false; }
+    if (!h || isNaN(h) || h < 50 || h > 250) { setErr('height', 'กรุณากรอกส่วนสูงที่ถูกต้อง (50-250 cm)'); valid = false; }
+    if (behaviors.length === 0) {
+      document.getElementById('behaviorErr').textContent = 'กรุณาเลือกพฤติกรรมความเสี่ยง (หรือเลือก "ไม่มี")';
+      valid = false;
+    } else {
+      document.getElementById('behaviorErr').textContent = '';
+    }
+
+    if (!valid) { showAlert('alertPage2', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน'); return; }
+
+    patient.weight = w;
+    patient.height = h;
+    patient.behaviors = behaviors;
+    patient.disease = document.getElementById('disease').value;
+
+    // BMI
+    const bmi = w / Math.pow(h / 100, 2);
+    patient.bmi = Math.round(bmi * 10) / 10;
+
+    // BMI Category
+    let bmiCat = '', bmiScore = 0;
+    if (bmi < 18.5) { bmiCat = 'น้ำหนักน้อยกว่าเกณฑ์ (Underweight)'; bmiScore = 1; }
+    else if (bmi < 23) { bmiCat = 'น้ำหนักปกติ (Normal weight)'; bmiScore = 0; }
+    else if (bmi < 25) { bmiCat = 'น้ำหนักเกิน (Overweight)'; bmiScore = 1; }
+    else if (bmi < 30) { bmiCat = 'อ้วน (Obese I)'; bmiScore = 2; }
+    else { bmiCat = 'อ้วนมาก (Obese II)'; bmiScore = 3; }
+    patient.bmiCategory = bmiCat;
+
+    // Risk Score
+    const hasSmoking = behaviors.includes('smoking');
+    const hasAlcohol = behaviors.includes('alcohol');
+    const hasSedentary = behaviors.includes('sedentary');
+    const hasStress = behaviors.includes('stress');
+    const hasDisease = patient.disease !== 'none';
+    const hasHighRiskDisease = ['heart', 'diabetes', 'kidney'].includes(patient.disease);
+
+    let riskScore = bmiScore;
+    if (hasSmoking) riskScore += 2;
+    if (hasAlcohol) riskScore += 1;
+    if (hasSedentary) riskScore += 1;
+    if (hasStress) riskScore += 1;
+    if (hasDisease) riskScore += 1;
+    if (hasHighRiskDisease) riskScore += 2;
+    if (patient.age >= 60) riskScore += 1;
+    if (patient.age >= 40 && patient.age < 60) riskScore += 0.5;
+
+    let riskLevel, riskClass;
+    if (riskScore <= 2) { riskLevel = 'ความเสี่ยงต่ำ (Low Risk)'; riskClass = 'low'; }
+    else if (riskScore <= 5) { riskLevel = 'ความเสี่ยงปานกลาง (Moderate Risk)'; riskClass = 'moderate'; }
+    else { riskLevel = 'ความเสี่ยงสูง (High Risk)'; riskClass = 'high'; }
+
+    patient.riskLevel = riskLevel;
+    patient.riskClass = riskClass;
+    patient.riskScore = riskScore;
+
+    renderResult();
+    showPage(3);
+  }
+
+  // ========== Render Result ==========
+  function renderResult() {
+    document.getElementById('bmiValue').textContent = patient.bmi;
+    document.getElementById('bmiCategory').textContent = patient.bmiCategory;
+
+    // Summary rows
+    const genderMap = { male: 'ชาย', female: 'หญิง', other: 'อื่น ๆ' };
+    const diseaseMap = { none: 'ไม่มี', diabetes: 'เบาหวาน', hypertension: 'ความดันโลหิตสูง', heart: 'โรคหัวใจ', asthma: 'หอบหืด', kidney: 'โรคไต', other: 'อื่น ๆ' };
+    const behaviorMap = { smoking: '🚬 สูบบุหรี่', alcohol: '🍺 ดื่มแอลกอฮอล์', sedentary: '🛋️ ไม่ออกกำลังกาย', stress: '😰 ความเครียดสูง', none: '✅ ไม่มี' };
+    const behaviorText = patient.behaviors.map(b => behaviorMap[b] || b).join(', ');
+
+    const rows = [
+      ['ชื่อ-นามสกุล', `${patient.firstName} ${patient.lastName}`],
+      ['อายุ / เพศ', `${patient.age} ปี / ${genderMap[patient.gender] || patient.gender}`],
+      ['น้ำหนัก / ส่วนสูง', `${patient.weight} kg / ${patient.height} cm`],
+      ['โรคประจำตัว', diseaseMap[patient.disease] || patient.disease],
+      ['พฤติกรรมเสี่ยง', behaviorText],
+    ];
+
+    document.getElementById('summaryRows').innerHTML = rows.map(([label, val]) =>
+      `<div class="result-row"><span class="result-label">${label}</span><span class="result-value">${val}</span></div>`
+    ).join('');
+
+    // Chip
+    const chip = document.getElementById('riskChip');
+    chip.textContent = patient.riskLevel;
+    chip.className = `chip chip-${patient.riskClass}`;
+
+    // Recommendations
+    const recs = getRecommendations();
+    document.getElementById('recList').innerHTML = recs.map(r =>
+      `<li class="rec-item ${patient.riskClass}">${r}</li>`
+    ).join('');
+  }
+
+  function getRecommendations() {
+    const recs = [];
+    if (patient.riskClass === 'low') {
+      recs.push('✅ สุขภาพโดยรวมอยู่ในเกณฑ์ดี ควรรักษาพฤติกรรมที่ดีต่อเนื่อง');
+      recs.push('🏃 ออกกำลังกายอย่างน้อย 150 นาทีต่อสัปดาห์');
+      recs.push('🥦 รับประทานอาหารที่มีประโยชน์ หลีกเลี่ยงอาหารไขมันสูง น้ำตาลสูง');
+      recs.push('🏥 ตรวจสุขภาพประจำปีอย่างสม่ำเสมอ');
+    } else if (patient.riskClass === 'moderate') {
+      recs.push('⚠️ ควรพบแพทย์เพื่อตรวจสุขภาพและรับคำแนะนำเพิ่มเติม');
+      recs.push('🏃 เพิ่มการออกกำลังกายให้สม่ำเสมอ อย่างน้อย 30 นาทีต่อวัน');
+      recs.push('🍎 ปรับพฤติกรรมการรับประทานอาหาร ลดอาหารที่มีไขมันและเกลือสูง');
+      if (patient.behaviors.includes('smoking')) recs.push('🚭 เลิกสูบบุหรี่จะช่วยลดความเสี่ยงได้อย่างมาก');
+      if (patient.behaviors.includes('alcohol')) recs.push('🍶 ลดการดื่มแอลกอฮอล์หรือหยุดดื่ม');
+      recs.push('📊 ติดตามค่า BMI ทุก 3 เดือน');
+    } else {
+      recs.push('🚨 ควรพบแพทย์โดยเร็วที่สุดเพื่อรับการประเมินและรักษา');
+      recs.push('💊 หากมีโรคประจำตัว ต้องรับประทานยาและติดตามอาการอย่างเคร่งครัด');
+      recs.push('🏥 นัดตรวจสุขภาพและตรวจเลือดทุก 3-6 เดือน');
+      if (patient.behaviors.includes('smoking')) recs.push('🚭 หยุดสูบบุหรี่ทันที — เพิ่มความเสี่ยงโรคหัวใจและหลอดเลือดอย่างมาก');
+      if (patient.behaviors.includes('alcohol')) recs.push('🍶 งดดื่มแอลกอฮอล์โดยเด็ดขาด');
+      recs.push('🧘 ลดความเครียดด้วยการทำสมาธิ ออกกำลังกายเบา หรือพูดคุยกับนักจิตวิทยา');
+      recs.push('📞 ติดต่อสายด่วนสุขภาพ 1330 หรือโรงพยาบาลใกล้บ้านทันที');
+    }
+    return recs;
+  }
+
+  // ========== Dialog ==========
+  function showDialog() {
+    const diseaseMap = { none: 'ไม่มี', diabetes: 'เบาหวาน', hypertension: 'ความดันโลหิตสูง', heart: 'โรคหัวใจ', asthma: 'หอบหืด', kidney: 'โรคไต', other: 'อื่น ๆ' };
+    const behaviorMap = { smoking: 'สูบบุหรี่', alcohol: 'ดื่มแอลกอฮอล์', sedentary: 'ไม่ออกกำลังกาย', stress: 'ความเครียดสูง', none: 'ไม่มี' };
+    const behaviorText = patient.behaviors.map(b => behaviorMap[b] || b).join(', ');
+    const genderMap = { male: 'ชาย', female: 'หญิง', other: 'อื่น ๆ' };
+    const date = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    document.getElementById('dialogTitleText').textContent = `ใบสรุปผลการประเมิน — ${patient.firstName} ${patient.lastName}`;
+    document.getElementById('dialogContent').innerHTML = `
+      <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:12px">วันที่ประเมิน: ${date}</p>
+      <table style="width:100%;border-collapse:collapse;font-size:.9rem">
+        <tr style="background:#f0f4fa"><td style="padding:8px 12px;font-weight:600">ชื่อ-นามสกุล</td><td style="padding:8px 12px">${patient.firstName} ${patient.lastName}</td></tr>
+        <tr><td style="padding:8px 12px;font-weight:600">อายุ</td><td style="padding:8px 12px">${patient.age} ปี</td></tr>
+        <tr style="background:#f0f4fa"><td style="padding:8px 12px;font-weight:600">เพศ</td><td style="padding:8px 12px">${genderMap[patient.gender]}</td></tr>
+        <tr><td style="padding:8px 12px;font-weight:600">น้ำหนัก</td><td style="padding:8px 12px">${patient.weight} kg</td></tr>
+        <tr style="background:#f0f4fa"><td style="padding:8px 12px;font-weight:600">ส่วนสูง</td><td style="padding:8px 12px">${patient.height} cm</td></tr>
+        <tr><td style="padding:8px 12px;font-weight:600">ค่า BMI</td><td style="padding:8px 12px"><strong>${patient.bmi}</strong> — ${patient.bmiCategory}</td></tr>
+        <tr style="background:#f0f4fa"><td style="padding:8px 12px;font-weight:600">โรคประจำตัว</td><td style="padding:8px 12px">${diseaseMap[patient.disease]}</td></tr>
+        <tr><td style="padding:8px 12px;font-weight:600">พฤติกรรมเสี่ยง</td><td style="padding:8px 12px">${behaviorText}</td></tr>
+        <tr style="background:#f0f4fa"><td style="padding:8px 12px;font-weight:600">ระดับความเสี่ยง</td><td style="padding:8px 12px"><strong>${patient.riskLevel}</strong></td></tr>
+      </table>
+    `;
+    document.getElementById('detailDialog').classList.add('show');
+  }
+
+  function closeDialog() {
+    document.getElementById('detailDialog').classList.remove('show');
+  }
+
+  document.getElementById('detailDialog').addEventListener('click', function (e) {
+    if (e.target === this) closeDialog();
+  });
+
+  // ========== Print ==========
+  function printResult() {
+    closeDialog();
+    setTimeout(() => window.print(), 200);
+  }
+
+  // ========== Reset ==========
+  function resetForm() {
+    document.getElementById('firstName').value = '';
+    document.getElementById('lastName').value = '';
+    document.getElementById('age').value = '';
+    document.getElementById('gender').value = '';
+    document.getElementById('idCard').value = '';
+    document.getElementById('weight').value = '';
+    document.getElementById('height').value = '';
+    document.getElementById('disease').value = 'none';
+    document.querySelectorAll('#riskBehaviors input[type=checkbox]').forEach(cb => cb.checked = false);
+    clearErrs('firstName', 'lastName', 'age', 'gender', 'weight', 'height');
+    showAlert('alertPage1', '');
+    showAlert('alertPage2', '');
+    patient = {};
+  }
+</script>
+
+<!-- Print Styles -->
+<style>
+  @media print {
+    .app-bar, .steps, .btn-actions, #page1, #page2 { display: none !important; }
+    .paper { box-shadow: none !important; }
+    body { background: white !important; }
+  }
+</style>
+</body>
+</html>
+
